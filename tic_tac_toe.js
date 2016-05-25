@@ -2,6 +2,7 @@
   TODO:
   - Make computer player pick random empty cell
   - Refactor functions to reduce similar code
+  - Make work as a command line game in node, instead of browser
 */
 
 var board = [[0,0,0],[0,0,0],[0,0,0]];
@@ -69,23 +70,17 @@ function askInput(){
 
 // update board with user input
 function updateBoard(board, input){
-  if(turnCount % 2 == 0){
-    if(input <= 3 && input > 0){
-      board[0][input - 1] = P1;
-    } else if(input > 3 && input <= 6){
-      board[1][input - 4] = P1;
-    } else if(input > 6 && input <= 9){
-      board[2][input - 7] = P1;
-    } 
-  } else if(turnCount % 2 != 0){
-    if(input <= 3 && input > 0){
-      board[0][input - 1] = P2;
-    } else if(input > 3 && input <= 6){
-      board[1][input - 4] = P2;
-    } else if(input > 6 && input <= 9){
-      board[2][input - 7] = P2;
-    } 
+  var currentPlayer = P1;
+  if(turnCount % 2 != 0) {
+    currentPlayer = P2;
   }
+  if(input <= 3 && input > 0){
+    board[0][input - 1] = currentPlayer;
+  } else if(input > 3 && input <= 6){
+    board[1][input - 4] = currentPlayer;
+  } else if(input > 6 && input <= 9){
+    board[2][input - 7] = currentPlayer;
+  } 
   return board;
 }
 
