@@ -85,8 +85,7 @@ function updateBoard(board, input){
 }
 
 //turn function 
-function turn(board){
-  
+function turn(board){ 
   if(turnCount === 0){
     //1. draw board
     drawBoard(board);
@@ -114,17 +113,20 @@ while(!gameWon(board)){
 
 //computer player
 function player2Move(board) {
-  var emptySpace = -1; 
+  var emptySpaces = [] 
+  var emptySpace = -1;
   for (var i = 0; i < board.length; i++) {
     emptySpace = board[i].indexOf(EMPTY);
     if(emptySpace > -1){
-      emptySpace = (i * 3) + emptySpace + 1;
-      break;
+      emptySpaces.push((i * 3) + emptySpace + 1);
     };
   };
-  console.log("index of emptySpace = " + emptySpace);
+  emptySpace = emptySpaces[Math.floor(Math.random() * (emptySpaces.length))];
   return emptySpace;
 }
+
+// var boardP2testing = [[0,1,2], [1,0,2], [0,2,1]];
+
 
 //check for a tie (board being full)
 function isBoardFull(board) {
