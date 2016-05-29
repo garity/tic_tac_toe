@@ -1,10 +1,3 @@
-/*
-  TODO:
-  - Make computer player pick random empty cell
-  - Refactor functions to reduce similar code
-  - Make work as a command line game in node, instead of browser
-*/
-
 var board = [[0,0,0],[0,0,0],[0,0,0]];
 
 var EMPTY = 0;
@@ -15,7 +8,6 @@ var p1Win = false;
 var p2Win = false;
 
 var turnCount = 0;
-
 
 //draw board
 function drawBoard(board){
@@ -34,35 +26,27 @@ function drawBoard(board){
   }).join("\n-----\n"));
 }
 
+//calculate array index from input
+function getCellByInput(input){
+  return board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length];
+}
+
+//set cell to current player
+function setCellByInput(input, val){
+  board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length] = val;
+}
+
 function askInput(){
   var input = window.prompt("Pick your move! Please enter a number between 1 & 9.")
-  // console.log("input = " + input);
   //check for valid input
-  if(input > 0 && input <= 3){
-    if(board[0][input - 1] != EMPTY){
+  if(input > 0 && input <= 9){
+    if(getCellByInput(input) != EMPTY){
       console.log("This space is occupied, please pick again.");
       return askInput();
     } else {
       return input;
     }
-  } 
-  if(input > 3 && input <= 6){
-    if(board[1][input - 4] != EMPTY){
-      console.log("This space is occupied, please pick again.");
-      return askInput();
-    } else {
-      return input;
-    }
-  }
-  if(input > 6 && input <= 9){
-    if(board[2][input - 7] != EMPTY){
-      console.log("This space is occupied, please pick again.");
-      return askInput();
-    } else {
-      return input;
-    }
-  } 
-  else {
+  } else {
     console.log("Error, invalid input");
     return askInput();
   }
@@ -74,13 +58,8 @@ function updateBoard(board, input){
   if(turnCount % 2 != 0) {
     currentPlayer = P2;
   }
-  if(input <= 3 && input > 0){
-    board[0][input - 1] = currentPlayer;
-  } else if(input > 3 && input <= 6){
-    board[1][input - 4] = currentPlayer;
-  } else if(input > 6 && input <= 9){
-    board[2][input - 7] = currentPlayer;
-  } 
+  //set cell to current player
+  setCellByInput(input, currentPlayer);
   return board;
 }
 
@@ -98,11 +77,10 @@ function turn(board){
     drawBoard(updateBoard(board, askInput()));
     turnCount += 1;
     console.log("turnCount = " + turnCount);
-  } 
-  if(turnCount % 2 != 0){
+  } else if(turnCount % 2 != 0){
     console.log("PLayer two's turn.");
     drawBoard(updateBoard(board, player2Move(board)));
-    console.log("this is the current board\n" + board);
+    // console.log("this is the current board\n" + board);
     turnCount += 1;
     console.log("turnCount = " + turnCount);
   }
@@ -124,9 +102,6 @@ function player2Move(board) {
   emptySpace = emptySpaces[Math.floor(Math.random() * (emptySpaces.length))];
   return emptySpace;
 }
-
-// var boardP2testing = [[0,1,2], [1,0,2], [0,2,1]];
-
 
 //check for a tie (board being full)
 function isBoardFull(board) {
@@ -224,8 +199,8 @@ function gameWon(board){
   return p1Win || p2Win;
 }
 
-var boardDraw = [[1,2,1],[2,2,1],[1,1,2]];
-var boardP1WonRow = [[1,1,1],[2,0,2],[2,0,0]];
-var boardP1WonCol = [[1,2,2],[1,0,2],[1,0,0]];
-var boardP1WonDiag = [[1,2,0],[2,1,2],[2,2,1]];
-var boardP2testing = [[0,1,2], [2,1,2], [0,2,1]];
+// var boardDraw = [[1,2,1],[2,2,1],[1,1,2]];
+// var boardP1WonRow = [[1,1,1],[2,0,2],[2,0,0]];
+// var boardP1WonCol = [[1,2,2],[1,0,2],[1,0,0]];
+// var boardP1WonDiag = [[1,2,0],[2,1,2],[2,2,1]];
+// var boardP2testing = [[0,1,2], [2,1,2], [0,2,1]];
