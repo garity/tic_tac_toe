@@ -1,3 +1,10 @@
+// TO DO
+// - P2Move AI
+// - refactor code?
+// - move functions around (more organized)
+// - wrap in an ASEF (Anonymous Self-Executing Function)
+// - make display in the browser window OR run as a node script
+
 var board = [[0,0,0],[0,0,0],[0,0,0]];
 
 var EMPTY = 0;
@@ -36,20 +43,30 @@ function setCellByInput(input, val){
   board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length] = val;
 }
 
-function askInput(){
-  var input = window.prompt("Pick your move! Please enter a number between 1 & 9.")
-  //check for valid input
-  if(input > 0 && input <= 9){
-    if(getCellByInput(input) != EMPTY){
-      console.log("This space is occupied, please pick again.");
-      return askInput();
-    } else {
-      return input;
+var prompt = require('prompt');
+
+function askInput(callback){
+  console.log("Pick your move! Please enter a number between 1 & 9.")
+    var schema = {
+    properties: {
+      input: {
+        pattern: /^[1-9]$/,
+        message: 'Input must be a number between 1 & 9.',
+        required: true
+      }
     }
-  } else {
-    console.log("Error, invalid input");
-    return askInput();
-  }
+  };
+  prompt.start();
+   prompt.get(schema, function (err, result) {
+    if (err){ 
+      return onErr(err);
+    } else {
+      console.log("input is: " + result.input);
+      callback(result.input);
+      // return result.input;
+    }
+  });
+  
 } 
 
 // update board with user input
@@ -65,29 +82,38 @@ function updateBoard(board, input){
 
 //turn function 
 function turn(board){ 
+  //if it is the start of the game: draw board & give instructions
   if(turnCount === 0){
-    //1. draw board
     drawBoard(board);
-    //2. give instructions 
-    window.alert("Welcome to Tic Tac Toe! You are Player 1. The spaces on the board are numbered 1 through 9. Good luck!");
+    console.log("Welcome to Tic Tac Toe! You are Player 1. The spaces on the board are numbered 1 through 9. Good luck!");
   }
-  //3. on even turns ask for input from player 1 & redraw board 
+  //P1 plays on even turns. Ask P1 for input, redraw board and increment turn counter 
   if(turnCount % 2 === 0){
-    console.log("Player one's turn.");
-    drawBoard(updateBoard(board, askInput()));
-    turnCount += 1;
-    console.log("turnCount = " + turnCount);
-  } else if(turnCount % 2 != 0){
+    askInput(function(input){
+      console.log("Player one's turn.");
+      drawBoard(updateBoard(board, input));
+      turnCount += 1;
+      console.log("turnCount = " + turnCount);
+      console.log("board = " + board);
+
+      if(!gameWon(board)){
+        turn(board);
+      }
+    });
+  }
+  //P2 plays on odd turns. Generate move from P2, redraw board and increment turn counter
+  else if(turnCount % 2 != 0){
     console.log("PLayer two's turn.");
     drawBoard(updateBoard(board, player2Move(board)));
-    // console.log("this is the current board\n" + board);
     turnCount += 1;
     console.log("turnCount = " + turnCount);
+    if(!gameWon(board)){
+        turn(board);
+      }
   }
-}
-while(!gameWon(board)){
-  turn(board);
 };
+
+turn(board);
 
 //computer player
 function player2Move(board) {
@@ -116,13 +142,13 @@ function isBoardFull(board) {
 
 // check for all cells matching
 function cellsMatch(arr, val) {
-  var newArr = [];
+  var testArr = [];
   for (var i = 0; i < arr.length; i++) {
     if(arr[i] === val) {
-      newArr.push(arr[i])
+      testArr.push(arr[i])
     }
   };
-  if (newArr.length === arr.length){
+  if (testArr.length === arr.length){
     return true;
   }
   return false;
