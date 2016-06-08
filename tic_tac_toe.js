@@ -1,9 +1,8 @@
 // TO DO
 // - P2Move AI
-// - refactor code?
-// - move functions around (more organized)
-// - wrap in an ASEF (Anonymous Self-Executing Function)
-// - make display in the browser window OR run as a node script
+// - refactor to use stdin instead of prompt
+
+var prompt = require('prompt');
 
 var board = [[0,0,0],[0,0,0],[0,0,0]];
 
@@ -33,20 +32,10 @@ function drawBoard(board){
   }).join("\n-----\n"));
 }
 
-//calculate array index from input
-function getCellByInput(input){
-  return board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length];
-}
-
-//set cell to current player
-function setCellByInput(input, val){
-  board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length] = val;
-}
-
-var prompt = require('prompt');
-
+//player one input
 function askInput(callback){
   console.log("Pick your move! Please enter a number between 1 & 9.")
+    //input validation: must be a number between 1 & 9
     var schema = {
     properties: {
       input: {
@@ -57,63 +46,21 @@ function askInput(callback){
     }
   };
   prompt.start();
-   prompt.get(schema, function (err, result) {
+  prompt.get(schema, function (err, result) {
     if (err){ 
-      return onErr(err);
-    } else {
+      throw err;
+    }else{
       console.log("input is: " + result.input);
-      callback(result.input);
-      // return result.input;
+      //check for valid input
+      if(getCellByInput(result.input) == EMPTY){
+        callback(result.input);
+      } else{
+        console.warn("This is not a valid move, please choose again.")
+        askInput(callback);
+      }
     }
-  });
-  
+  });  
 } 
-
-// update board with user input
-function updateBoard(board, input){
-  var currentPlayer = P1;
-  if(turnCount % 2 != 0) {
-    currentPlayer = P2;
-  }
-  //set cell to current player
-  setCellByInput(input, currentPlayer);
-  return board;
-}
-
-//turn function 
-function turn(board){ 
-  //if it is the start of the game: draw board & give instructions
-  if(turnCount === 0){
-    drawBoard(board);
-    console.log("Welcome to Tic Tac Toe! You are Player 1. The spaces on the board are numbered 1 through 9. Good luck!");
-  }
-  //P1 plays on even turns. Ask P1 for input, redraw board and increment turn counter 
-  if(turnCount % 2 === 0){
-    askInput(function(input){
-      console.log("Player one's turn.");
-      drawBoard(updateBoard(board, input));
-      turnCount += 1;
-      console.log("turnCount = " + turnCount);
-      console.log("board = " + board);
-
-      if(!gameWon(board)){
-        turn(board);
-      }
-    });
-  }
-  //P2 plays on odd turns. Generate move from P2, redraw board and increment turn counter
-  else if(turnCount % 2 != 0){
-    console.log("PLayer two's turn.");
-    drawBoard(updateBoard(board, player2Move(board)));
-    turnCount += 1;
-    console.log("turnCount = " + turnCount);
-    if(!gameWon(board)){
-        turn(board);
-      }
-  }
-};
-
-turn(board);
 
 //computer player
 function player2Move(board) {
@@ -129,18 +76,28 @@ function player2Move(board) {
   return emptySpace;
 }
 
-//check for a tie (board being full)
-function isBoardFull(board) {
-  var isFull = true
-  board.forEach(function(col){
-    if (col.indexOf(EMPTY) > -1){
-        return isFull = false;
-      }
-  });
-  return isFull;
+//calculate array index from input
+function getCellByInput(input){
+  return board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length];
 }
 
-// check for all cells matching
+//set cell to current player
+function setCellByInput(input, val){
+  board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length] = val;
+}
+
+// update board with p1 or p2 move 
+function updateBoard(board, input){
+  var currentPlayer = P1;
+  if(turnCount % 2 != 0) {
+    currentPlayer = P2;
+  }
+  //set cell to current player
+  setCellByInput(input, currentPlayer);
+  return board;
+}
+
+//helper function to check for all cells matching
 function cellsMatch(arr, val) {
   var testArr = [];
   for (var i = 0; i < arr.length; i++) {
@@ -154,6 +111,7 @@ function cellsMatch(arr, val) {
   return false;
 }
 
+//create array for both diagonals
 function getDiag(board){
   var diagLeft = [];
   var diagRight = [];
@@ -164,6 +122,7 @@ function getDiag(board){
   return [diagLeft, diagRight]
 }
 
+//create array for columns
 function getCols(board){
   var colArr = [];
   for(var i = 0; i < board.length; i++){
@@ -177,56 +136,100 @@ function getCols(board){
   return colArr;
 }
 
+//checks if the board is full
+function isBoardFull(board) {
+  var isFull = true
+  board.forEach(function(col){
+    if (col.indexOf(EMPTY) > -1){
+        return isFull = false;
+      }
+  });
+  return isFull;
+}
+
+//checks to see if the game has been won
 function gameWon(board){
-  // check row
+  // check rows
   board.forEach(function(row){
     if(cellsMatch(row, P1)){
       p1Win = true;
-      console.log("Game over. Player one, you win!");
     }
   });
   board.forEach(function(row){
     if(cellsMatch(row, P2)){
       p2Win = true;
-      console.log("Game over. Player two, you win!");
     }
   });
-  // check col
+  // check cols
   getCols(board).forEach(function(col){
     if(cellsMatch(col, P1)){
       p1Win = true;
-      console.log("Game over. Player one, you win!")
     }
   });
    getCols(board).forEach(function(col){
     if(cellsMatch(col, P2)){
       p2Win = true;
-      return "Game over. Player two, you win!";
     }
   });
-  // check diag
+  // check diags
   getDiag(board).forEach(function(diag){
     if(cellsMatch(diag, P1)){
       p1Win = true;
-      console.log("Game over. Player one, you win!")
     }
   });
   getDiag(board).forEach(function(diag){
     if(cellsMatch(diag, P2)){
-      p2Win = true;
-      console.log("Game over. Player two, you win!");
+      p2Win = true;  
     }
   });
   //check for a tie
-  if(isBoardFull(board)){
+  if(isBoardFull(board) && !p1Win && !p2Win){
     console.log("Game over. It is a tie.");
     return true;
+  }
+  if(p1Win){
+    console.log("Game over. Player one, you win!");
+  }else if(p2Win){
+    console.log("Game over. Player two, you win!");
   }
   return p1Win || p2Win;
 }
 
-// var boardDraw = [[1,2,1],[2,2,1],[1,1,2]];
-// var boardP1WonRow = [[1,1,1],[2,0,2],[2,0,0]];
-// var boardP1WonCol = [[1,2,2],[1,0,2],[1,0,0]];
-// var boardP1WonDiag = [[1,2,0],[2,1,2],[2,2,1]];
-// var boardP2testing = [[0,1,2], [2,1,2], [0,2,1]];
+
+//turn function to run game
+function turn(board){ 
+  //starts the game: draws the board & gives instructions
+  if(turnCount === 0){
+    drawBoard(board);
+    console.log("Welcome to Tic Tac Toe! You are Player 1. The spaces on the board are numbered 1 through 9. Good luck!");
+  }
+  //P1 plays on even turns. Asks P1 for input, redraws board and increments turn counter 
+  if(turnCount % 2 === 0){
+    askInput(function(input){
+      console.log("Player one's turn.");
+      drawBoard(updateBoard(board, input));
+      turnCount += 1;
+      console.log("turn #" + turnCount);
+      //if the game is not won call turn
+      if(!gameWon(board)){
+        turn(board);
+      }
+    });
+  }
+  //P2 plays on odd turns. Generates move from P2, redraws board and increments turn counter
+  else if(turnCount % 2 != 0){
+    //TODO: add in delay between players turns
+    console.log("PLayer two's turn.");
+    drawBoard(updateBoard(board, player2Move(board)));
+    turnCount += 1;
+    console.log("turn #" + turnCount);
+    //if the game is not won call turn
+    if(!gameWon(board)){
+        turn(board);
+      }
+  }
+};
+//first call to turn
+turn(board);
+
+
