@@ -19,8 +19,8 @@ var turnCount = 0;
 
 //draw board
 function drawBoard(board){
-    console.log(board.map(function(col){
-    return col.map(function(cell){
+    console.log(board.map(function(row){
+    return row.map(function(cell){
       if (cell === EMPTY) {
         return " ";
       }
