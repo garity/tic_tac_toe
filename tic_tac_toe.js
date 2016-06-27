@@ -12,9 +12,6 @@ var EMPTY = 0;
 var P1 = 1;
 var P2 = 2;
 
-var p1Win = false;
-var p2Win = false;
-
 var turnCount = 0;
 
 //draw board
@@ -53,7 +50,7 @@ function askInput(callback){
       throw err;
     }else{
       //check for valid input
-      if(getCellByInput(result.input) == EMPTY){
+      if(getCellByInput(board, result.input) == EMPTY){
         callback(result.input);
       } else{
         console.warn("This is not a valid move, please choose again.")
@@ -65,25 +62,40 @@ function askInput(callback){
 
 //computer player
 function player2Move(board) {
-  var emptySpaces = [] 
+  var emptySpaces = [];
   var emptySpace = -1;
   for (var i = 0; i < board.length; i++) {
     emptySpace = board[i].indexOf(EMPTY);
     if(emptySpace > -1){
       emptySpaces.push((i * 3) + emptySpace + 1);
-    };
-  };
+    }
+  }
+  // pick a winning move if possible
+  for (var i = 0; i < emptySpaces.length; i++) {
+    var testBoard = cloneBoard(board);
+    setCellByInput(testBoard, emptySpaces[i], P2);
+    if(gameWon(testBoard)) {
+      return emptySpaces[i];
+    }
+  }
+  //else pick a move at random
   emptySpace = emptySpaces[Math.floor(Math.random() * (emptySpaces.length))];
   return emptySpace;
 }
 
+function cloneBoard(board){
+  return board.map(function(row){
+    return row.slice();
+  });
+}
+
 //calculate array index from input
-function getCellByInput(input){
+function getCellByInput(board, input){
   return board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length];
 }
 
 //set cell to current player
-function setCellByInput(input, val){
+function setCellByInput(board, input, val){
   board[Math.ceil(input / board.length) - 1][(input - 1) % board[1].length] = val;
 }
 
@@ -94,7 +106,7 @@ function updateBoard(board, input){
     currentPlayer = P2;
   }
   //set cell to current player
-  setCellByInput(input, currentPlayer);
+  setCellByInput(board, input, currentPlayer);
   return board;
 }
 
@@ -150,6 +162,8 @@ function isBoardFull(board) {
 
 //checks to see if the game has been won
 function gameWon(board){
+  var p1Win = false;
+  var p2Win = false;
   // check rows
   board.forEach(function(row){
     if(cellsMatch(row, P1)){
@@ -187,11 +201,6 @@ function gameWon(board){
   if(isBoardFull(board) && !p1Win && !p2Win){
     console.log("Game over. It is a tie.");
     return true;
-  }
-  if(p1Win){
-    p1WinnerMsg();
-  }else if(p2Win){
-    p1LoseMsg();
   }
   return p1Win || p2Win;
 }
@@ -242,7 +251,9 @@ function turn(board){
       drawBoard(updateBoard(board, input));
       turnCount += 1;
       //if the game is not won call turn
-      if(!gameWon(board)){
+      if(gameWon(board)){
+          p1WinnerMsg();
+      } else {
         turn(board);
       }
     });
@@ -257,10 +268,12 @@ function turn(board){
     setTimeout(function(){
       drawBoard(updateBoard(board, player2Move(board)));
       turnCount += 1;
-    //if the game is not won call turn
-    if(!gameWon(board)){
+      //if the game is not won call turn
+      if(gameWon(board)){
+        p1LoseMsg();
+      } else {
         turn(board);
-      }
+      }  
     }, 2000);
     
   }
