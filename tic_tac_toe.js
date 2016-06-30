@@ -1,4 +1,5 @@
 // TO DO
+// - fix "its a tie" bug
 // - P2Move AI
 // - refactor to use stdin instead of prompt
 // - want to play again?
@@ -63,21 +64,29 @@ function askInput(callback){
 //computer player
 function player2Move(board) {
   var emptySpaces = [];
-  var emptySpace = -1;
   for (var i = 0; i < board.length; i++) {
-    emptySpace = board[i].indexOf(EMPTY);
-    if(emptySpace > -1){
-      emptySpaces.push((i * 3) + emptySpace + 1);
+    for (var j = 0; j < board[i].length; j++) {
+      if(board[i][j] === EMPTY){
+        emptySpaces.push((i * 3) + j + 1);
+      }
     }
-  }
+  };
   // pick a winning move if possible
   for (var i = 0; i < emptySpaces.length; i++) {
     var testBoard = cloneBoard(board);
     setCellByInput(testBoard, emptySpaces[i], P2);
-    if(gameWon(testBoard)) {
+    if(gameWon(testBoard) === stateConst.P2_WON) {
       return emptySpaces[i];
     }
   }
+  // pick a move preventing P1 from winning
+  for (var i = 0; i < emptySpaces.length; i++) {
+    var testBoard = cloneBoard(board);
+    setCellByInput(testBoard, emptySpaces[i], P1);
+    if(gameWon(testBoard) === stateConst.P1_WON) {
+      return emptySpaces[i];
+    }
+  };
   //else pick a move at random
   emptySpace = emptySpaces[Math.floor(Math.random() * (emptySpaces.length))];
   return emptySpace;
@@ -160,49 +169,58 @@ function isBoardFull(board) {
   return isFull;
 }
 
+var stateConst = Object.freeze({
+  P1_WON: "P1_WON",
+  P2_WON: "P2_WON",
+  TIE: "TIE",
+  CONTINUE: "CONTINUE"
+});
+
 //checks to see if the game has been won
 function gameWon(board){
-  var p1Win = false;
-  var p2Win = false;
+  // var p1Win = false;
+  // var p2Win = false;
+  var gameState = stateConst.CONTINUE; 
   // check rows
   board.forEach(function(row){
     if(cellsMatch(row, P1)){
-      p1Win = true;
+      gameState = stateConst.P1_WON;
     }
   });
   board.forEach(function(row){
     if(cellsMatch(row, P2)){
-      p2Win = true;
+      gameState = stateConst.P2_WON;
     }
   });
   // check cols
   getCols(board).forEach(function(col){
     if(cellsMatch(col, P1)){
-      p1Win = true;
+      gameState = stateConst.P1_WON;
+      console.log("gameState = " + gameState);
     }
   });
    getCols(board).forEach(function(col){
     if(cellsMatch(col, P2)){
-      p2Win = true;
+      gameState = stateConst.P2_WON;
+      console.log("gameState = " + gameState);
     }
   });
   // check diags
   getDiag(board).forEach(function(diag){
     if(cellsMatch(diag, P1)){
-      p1Win = true;
+      gameState = stateConst.P1_WON;
     }
   });
   getDiag(board).forEach(function(diag){
     if(cellsMatch(diag, P2)){
-      p2Win = true;  
+      gameState = stateConst.P2_WON;
     }
   });
   //check for a tie
-  if(isBoardFull(board) && !p1Win && !p2Win){
-    console.log("Game over. It is a tie.");
-    return true;
+  if(isBoardFull(board) && gameState === stateConst.CONTINUE){
+    gameState = stateConst.TIE;
   }
-  return p1Win || p2Win;
+  return gameState;
 }
 
 function welcomeMsg(){
@@ -251,8 +269,10 @@ function turn(board){
       drawBoard(updateBoard(board, input));
       turnCount += 1;
       //if the game is not won call turn
-      if(gameWon(board)){
+      if(gameWon(board) === stateConst.P1_WON){
           p1WinnerMsg();
+      } else if (gameWon(board) === stateConst.TIE){
+        console.log("Game over. It is a tie.");
       } else {
         turn(board);
       }
@@ -269,8 +289,10 @@ function turn(board){
       drawBoard(updateBoard(board, player2Move(board)));
       turnCount += 1;
       //if the game is not won call turn
-      if(gameWon(board)){
+      if(gameWon(board) === stateConst.P2_WON){
         p1LoseMsg();
+      } else if (gameWon(board) === stateConst.TIE){
+        console.log("Game over. It is a tie.");
       } else {
         turn(board);
       }  
